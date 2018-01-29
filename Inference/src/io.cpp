@@ -37,4 +37,3 @@ cv::Mat_<cv::Vec3i> IO::readMask(boost::filesystem::path& p) {
 	cv::Mat_<cv::Vec3i> pngC3 = cv::imread(p.string(), 1);
 	return pngC3;
 }
-

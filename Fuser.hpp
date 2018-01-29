@@ -4,10 +4,9 @@
 
 #pragma once
 
-#include <utils/boundingBox.hpp>
+#include "BoundingBox.hpp"
 #include <opencv2/opencv.hpp>
 
-namespace utils {
 class Fuser
 {
 public:
@@ -31,6 +30,7 @@ public:
 
 	void fuse(float* estimate_xyz);			// return xyz in world cs (96 x 96 3d space) - gauss covariance + PCA
 	void fuse_sub(float* estimate_xyz);		// return xyz in world cs (96 x 96 3d space) - mean-shift
+	void get_proj_bounding_box();
 
 private:
 	double bounding_box_x_18[3];
@@ -68,5 +68,4 @@ private:
 
 	float fuse_confidence(float conf_xy, float conf_yz, float conf_zx);
 };
-} //namespace utils
 

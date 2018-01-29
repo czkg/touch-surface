@@ -60,7 +60,9 @@ add_executable(touchDetector main.cpp
                              DLibInterface.cpp
 			     HeatmapInterpreter.cpp
 			     HandModel.cpp
-			     HandPSO.cpp)
+			     HandPSO.cpp
+			     Fuser.cpp
+			     BoundingBox.cpp)
 target_link_libraries(touchDetector ${LINK_LIBS} ${CURSES_LIBRARIES} Inference CUDA_RDF)
 
 add_executable(calibrateProCam calibrate_pro_cam.cpp)

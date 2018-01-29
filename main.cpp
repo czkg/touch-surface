@@ -135,8 +135,8 @@ public:
         m_intialized = true;
     }
 
-    void loadCNNModel(const string& modelFile, const string& weightsFile) {
-        m_touch_detector.loadCNNModel(modelFile, weightsFile);
+    void loadCNNModel(const string& modelFile, const string& weightsFile_xy, const string& weightsFile_yz, const string& weightsFile_zx) {
+        m_touch_detector.loadCNNModel(modelFile, weightsFile_xy, weightsFile_yz, weightsFile_zx);
     }
 
     void loadRDF(const string& rdfProtoFilename, const std::string& rdfForestDataFile, cv::Size s) {
@@ -257,7 +257,9 @@ int main(int argc, char const *argv[]) {
                                              "{@source||}"
                                              "{calib|pro_cam_calibration.yaml|projector camera calibration file}"
                                              "{cnnmodel||CNN Caffe model file (.prototxt)}"
-                                             "{cnnweights||CNN Caffe weights file (.caffemodel.h5)}"
+                                             "{cnnweights_xy||CNN Caffe weights file for xy plane (.caffemodel.h5)}"
+                                             "{cnnweights_yz||CNN Caffe weights file for yz plane (.caffemodel.h5)}"
+                                             "{cnnweights_zx||CNN Caffe weights file for zx plane (.caffemodel.h5)}"
                                              "{rdfproto||The prototxt file of the CUDA RandomForest paremeters}"
                                              "{rdfdata||The data file of the CUDA RandomForest}"
                                          );
@@ -280,7 +282,9 @@ int main(int argc, char const *argv[]) {
     TouchServer touchServer;
     touchServer.loadCalibrationFromFile(parser.get<string>("calib"));
     touchServer.loadCNNModel           (parser.get<string>("cnnmodel"),
-                                        parser.get<string>("cnnweights"));
+                                        parser.get<string>("cnnweights_xy"),
+                                        parser.get<string>("cnnweights_yz"),
+                                        parser.get<string>("cnnweights_zx"));
     touchServer.loadRDF                (parser.get<string>("rdfproto"),
                                         parser.get<string>("rdfdata"), Size(640, 480));
 

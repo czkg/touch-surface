@@ -89,8 +89,8 @@ public:
         m_rdf.init(rdfProtoFilename, rdfForestDataFile, s);
     }
 
-    void loadCNNModel(const std::string& modelFile, const std::string& weightsFile) {
-        m_hand_pose_estimator.intialize(modelFile, weightsFile);
+    void loadCNNModel(const std::string& modelFile, const std::string& weightsFile_xy, const std::string& weightsFile_yz, const std::string& weightsFile_zx) {
+        m_hand_pose_estimator.initialize(modelFile, weightsFile_xy, weightsFile_yz, weightsFile_zx);
     }
 
     std::vector<cv::Point2f> getJoints() {

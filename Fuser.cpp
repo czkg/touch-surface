@@ -2,7 +2,7 @@
 //  Created by Liuhao Ge on 08/08/2016.
 //
 
-#include <utils/fuser.hpp>
+#include "Fuser.hpp"
 #include <time.h>
 
 #define HEAT_NUM 20
@@ -11,7 +11,6 @@
 
 //#define PCA_SZ 20	// 1 ~ 60
 
-namespace utils {
 Fuser::Fuser()
 {
 	heatmaps_vec.resize(HEAT_NUM*3);
@@ -181,7 +180,7 @@ void Fuser::fuse_sub(float* estimate_xyz)	// respectively optimization
 	}
 }
 
-jtil::math::Float4 Fuser::estimate_joint_xyz(int joint_i)
+math::Float4 Fuser::estimate_joint_xyz(int joint_i)
 {
 	double h = 10;	// 50
 	double lamda[3] = {3, 1, 1};
@@ -529,4 +528,13 @@ float Fuser::fuse_confidence(float conf_xy, float conf_yz, float conf_zx)
 	//return pow(conf_xy, 1 / lamda[0]) * pow(conf_yz, 1 / lamda[1]) * pow(conf_zx, 1 / lamda[2]);
 	return conf_xy * conf_yz * conf_zx;
 }
-} //namespace utils
+
+void Fuser::get_proj_bounding_box() {
+	for(int i = 0; i < 3; i ++) {
+		bounding_box_x[i] = bounding_box_3D.get_proj_bounding_box()[i].x;
+		bounding_box_y[i] = bounding_box_3D.get_proj_bounding_box()[i].y;
+		proj_k[i] = bounding_box_3D.get_proj_k()[i];
+		bounding_box_width[i] = bounding_box_3D.get_proj_bounding_box()[i].width;
+		bounding_box_height[i] = bounding_box_3D.get_proj_bounding_box()[i].height;
+	}
+}

@@ -17,11 +17,15 @@ using namespace std;
 using namespace HandPoseUtils;
 using namespace TouchDetectionUtils;
 
-void HandPoseEstimator::intialize(const std::string& modelFilename, const std::string& weightsFilename) {
+const float focal_length = 21.65; //mm
+
+void HandPoseEstimator::initialize(const std::string& modelFilename, const std::string& weightsFilename_xy, const std::string& weightsFilename_yz, const std::string& weightsFilename_zx) {
     using caffe::Caffe;
 
-    LOG(INFO) << "initialize Caffe: " << modelFilename << ", " << weightsFilename;
-    const bool isFt = m_inference.init(modelFilename, weightsFilename);
+    LOG(INFO) << "initialize Caffe: " << modelFilename << ", " << weightsFilename_xy << ", " << weightsFilename_yz << ", " << weightsFilename_zx;
+    const bool isFt = m_inference_xy.init(modelFilename, weightsFilename_xy);
+    m_inference_yz.init(modelFilename, weightsFilename_yz);
+    m_inference_zx.init(modelFilename, weightsFilename_zx);
 
     //set m_isFingerTipDetector accordingly
     setIsFingerTipModel(isFt);
@@ -34,7 +38,7 @@ void HandPoseEstimator::intialize(const std::string& modelFilename, const std::s
 FingerTips HandPoseEstimator::process(const cv::Mat& depthInput, const cv::Mat& mask) {
     Mat depth = depthInput.clone();
 
-    depth = depth / 1000.0;
+    depth /= 1000.0;
     depth.setTo(2.0, ~mask); //remove background
 
     // Mat norDepth = depth.clone();
@@ -52,27 +56,56 @@ FingerTips HandPoseEstimator::process(const cv::Mat& depthInput, const cv::Mat& 
     cv::Mat origRoi;
     roi.copyTo(origRoi); //for calculating roi_width
 
+    /*------------------------------Projection----------------------------*/
+    //project roi to 3 different planes
+    std::vector<cv::Mat> inputs;
+    inputs = projection(roi);
+
     cv::Mat depth_dis;
     cv::cvtColor(depth, depth_dis, CV_GRAY2BGR); //display on original depth image
 
     //resize to appropriate size so we can put it into network
-    std::vector<cv::Mat_<float> > imgs;
-    if(m_inference.numInputs() == 1) {
-        cv::resize(roi, roi, cv::Size(m_input_size, m_input_size), 0, 0, cv::INTER_AREA);
-        cv::Mat_<float> roi_input = Preprocess::filter(roi);
-        imgs.push_back(roi_input);
+    std::vector<cv::Mat_<float> > imgs_xy;
+    std::vector<cv::Mat_<float> > imgs_yz;
+    std::vector<cv::Mat_<float> > imgs_zx;
+    if(m_inference_xy.numInputs() == 1) {
+        //cv::resize(roi, roi, cv::Size(m_input_size, m_input_size), 0, 0, cv::INTER_AREA);
+        cv::Mat_<float> input_xy = Preprocess::filter(inputs[0]);
+        cv::Mat_<float> input_yz = Preprocess::filter(inputs[1]);
+        cv::Mat_<float> input_zx = Preprocess::filter(inputs[2]);
+        imgs_xy.push_back(input_xy);
+        imgs_yz.push_back(input_yz);
+        imgs_zx.push_back(input_zx);
     } else {
-        cv::Mat_<float> roi_high, roi_mid, roi_low;
-        cv::resize(roi, roi_high, cv::Size(m_input_size    , m_input_size    ), 0, 0, cv::INTER_AREA);
-        cv::resize(roi, roi_mid,  cv::Size(m_input_size / 2, m_input_size / 2), 0, 0, cv::INTER_AREA);
-        cv::resize(roi, roi_low,  cv::Size(m_input_size / 4, m_input_size / 4), 0, 0, cv::INTER_AREA);
-        imgs.push_back(Preprocess::filter(roi_high));
-        imgs.push_back(Preprocess::filter(roi_mid));
-        imgs.push_back(Preprocess::filter(roi_low));
+        cv::Mat_<float> input_high_xy, input_high_yz, input_high_zx;
+        cv::Mat_<float> input_mid_xy, input_mid_yz, input_mid_zx;
+        cv::Mat_<float> input_low_xy, input_low_yz, input_low_zx;
+        //cv::resize(roi, roi_high, cv::Size(m_input_size    , m_input_size    ), 0, 0, cv::INTER_AREA);
+        inputs[0].copyTo(input_high_xy);
+        inputs[1].copyTo(input_high_yz);
+        inputs[2].copyTo(input_high_zx);
+        cv::resize(inputs[0], input_mid_xy,  cv::Size(m_input_size / 2, m_input_size / 2), 0, 0, cv::INTER_AREA);
+        cv::resize(inputs[1], input_mid_yz,  cv::Size(m_input_size / 2, m_input_size / 2), 0, 0, cv::INTER_AREA);
+        cv::resize(inputs[2], input_mid_zx,  cv::Size(m_input_size / 2, m_input_size / 2), 0, 0, cv::INTER_AREA);
+        cv::resize(inputs[0], input_low_xy,  cv::Size(m_input_size / 4, m_input_size / 4), 0, 0, cv::INTER_AREA);
+        cv::resize(inputs[1], input_low_yz,  cv::Size(m_input_size / 4, m_input_size / 4), 0, 0, cv::INTER_AREA);
+        cv::resize(inputs[2], input_low_zx,  cv::Size(m_input_size / 4, m_input_size / 4), 0, 0, cv::INTER_AREA);
+        imgs_xy.push_back(Preprocess::filter(input_high_xy));
+        imgs_xy.push_back(Preprocess::filter(input_mid_xy));
+        imgs_xy.push_back(Preprocess::filter(input_low_xy));
+        imgs_yz.push_back(Preprocess::filter(input_high_yz));
+        imgs_yz.push_back(Preprocess::filter(input_mid_yz));
+        imgs_yz.push_back(Preprocess::filter(input_low_yz));
+        imgs_zx.push_back(Preprocess::filter(input_high_zx));
+        imgs_zx.push_back(Preprocess::filter(input_mid_zx));
+        imgs_zx.push_back(Preprocess::filter(input_low_zx));
     }
 
+    /*-----------------------------Inference---------------------------*/
     //feed the image into the network
-    std::vector<float> result = m_inference.Predict(imgs);
+    std::vector<float> result_xy = m_inference_xy.Predict(imgs_xy);
+    std::vector<float> result_yz = m_inference_yz.Predict(imgs_yz);
+    std::vector<float> result_zx = m_inference_zx.Predict(imgs_zx);
 
     const int numberOfJoints = (m_isFingerTipDetector) ? 5 : 20;
     std::vector<Point2f> joints(numberOfJoints);
@@ -80,32 +113,58 @@ FingerTips HandPoseEstimator::process(const cv::Mat& depthInput, const cv::Mat& 
     const int heatmap_size = m_heatmap_width * m_heatmap_width;
     const int roi_width = origRoi.cols;
 
-    //get joints from heatmaps
     for(int i = 0; i < numberOfJoints; i++) {
-        cv::Mat heatmapMat(m_heatmap_width, m_heatmap_width, CV_32FC1, &result[0] + i * heatmap_size);
-        cv::Point2f hmPoint = m_hmInterpreter.gaussianFitting(heatmapMat);  // add gaussian fitting
+        m_fuser.heatmaps_vec[i * 3] = cv::Mat(m_heatmap_width, m_heatmap_width, CV_32FC1, &result_xy[0] + i * heatmap_size);
+        m_fuser.heatmaps_vec[i * 3 + 1] = cv::Mat(m_heatmap_width, m_heatmap_width, CV_32FC1, &result_yz[0] + i * heatmap_size);
+        m_fuser.heatmaps_vec[i * 3 + 2] = cv::Mat(m_heatmap_width, m_heatmap_width, CV_32FC1, &result_zx[0] + i * heatmap_size);
+    }
 
-        // std::vector<float> current(result.begin() + i * heatmap_size, result.begin() + (i + 1) * heatmap_size);
-        // auto ite_max = std::max_element(current.begin(), current.end());
-        // const int max = std::distance(current.begin(), ite_max);
-        // //translate from heatmap size (20) to roi size
-        // float x = (float)(max % m_heatmap_width) / (float)m_heatmap_width * (float)roi_width;
-        // float y = (float)(max / m_heatmap_width) / (float)m_heatmap_width * (float)roi_width;
+    /*------------------------------Fusion------------------------------*/
+    m_fuser.get_proj_bounding_box();
+    float xyz_estimated[numberOfJoints * 3];
+    m_fuser.fuse(xyz_estimated);
 
-        //transfer to original roi rect
-        float x = hmPoint.x / (float)m_heatmap_width * (float)roi_width;
-        float y = hmPoint.y / (float)m_heatmap_width * (float)roi_width;
+    /*----------------------------Get joints----------------------------*/
+    for(int i = 0; i < numberOfJoints; i++) {
+        float x = xyz_estimated[i * 3] / (float)m_input_size * (float)roi_width;
+        float y = xyz_estimated[i * 3 + 1] / (float)m_input_size * (float)roi_width;
         x -= (float)info[0];
         y -= (float)info[1];
         x = (x < 0) ? 0.0 : x;
         y = (y < 0) ? 0.0 : y;
 
-        //add .tl
         x += (float)roiTL.x;
         y += (float)roiTL.y;
         joints[i] = Point2f(x, y);
-
     }
+
+
+    //get joints from heatmaps
+    // for(int i = 0; i < numberOfJoints; i++) {
+    //     cv::Mat heatmapMat(m_heatmap_width, m_heatmap_width, CV_32FC1, &result[0] + i * heatmap_size);
+    //     cv::Point2f hmPoint = m_hmInterpreter.gaussianFitting(heatmapMat);  // add gaussian fitting
+
+    //     // std::vector<float> current(result.begin() + i * heatmap_size, result.begin() + (i + 1) * heatmap_size);
+    //     // auto ite_max = std::max_element(current.begin(), current.end());
+    //     // const int max = std::distance(current.begin(), ite_max);
+    //     // //translate from heatmap size (20) to roi size
+    //     // float x = (float)(max % m_heatmap_width) / (float)m_heatmap_width * (float)roi_width;
+    //     // float y = (float)(max / m_heatmap_width) / (float)m_heatmap_width * (float)roi_width;
+
+    //     //transfer to original roi rect
+    //     float x = hmPoint.x / (float)m_heatmap_width * (float)roi_width;
+    //     float y = hmPoint.y / (float)m_heatmap_width * (float)roi_width;
+    //     x -= (float)info[0];
+    //     y -= (float)info[1];
+    //     x = (x < 0) ? 0.0 : x;
+    //     y = (y < 0) ? 0.0 : y;
+
+    //     //add .tl
+    //     x += (float)roiTL.x;
+    //     y += (float)roiTL.y;
+    //     joints[i] = Point2f(x, y);
+
+    // }
 
     //cv::Mat depth_dis0 = depth_dis.clone();
     // drawJoints(depth_dis0, joints);
@@ -119,6 +178,54 @@ FingerTips HandPoseEstimator::process(const cv::Mat& depthInput, const cv::Mat& 
 
     return getFingerTipsFromJoints(joints);
 };
+
+void HandPoseEstimator::convertDepthImageToProjective(const cv::Mat_<float>& depth, float* uvd) {
+    //convert depth image to projective
+    int nIndex = 0;
+    for (int y = 0; y < depth.rows; y++)
+    {
+        for (int x = 0; x < depth.cols; x++)
+        {
+            uvd[nIndex * 3] = static_cast<float>(x);
+            uvd[nIndex * 3 + 1] = static_cast<float>(y);
+            uvd[nIndex * 3 + 2] = depth(y, x);
+            ++nIndex;
+        }
+    } 
+}
+
+void HandPoseEstimator::convertDepthToWorldCoordinates(const float* uvd, float* xyz) {
+    int count = sizeof(uvd) / sizeof(uvd[0]) / 3;
+    int width = std::sqrt(count);
+    int height = width;
+    for (int i = 0; i < count; i++) {
+        xyz[i * 3] = -(float(width)/2 - uvd[i * 3]) * (25. / 640.) * uvd[i * 3 + 2] / focal_length;
+        xyz[i * 3 + 1] = -(uvd[i * 3 + 1] - float(height) / 2) * (18.75 / 480.) * uvd[i * 3 + 2] / focal_length;
+        xyz[i * 3 + 2] = uvd[i * 3 + 2];
+    }
+}
+
+std::vector<cv::Mat> HandPoseEstimator::projection(const cv::Mat& roi) {
+    int pixel_number = roi.rows * roi.cols; //roi is a square, which means width = height
+    float xyz_data[pixel_number * 3];
+    float uvd_data[pixel_number * 3];
+
+    convertDepthImageToProjective(roi, uvd_data);
+    convertDepthToWorldCoordinates(uvd_data, xyz_data);
+
+    //create the bounding box
+    m_fuser.bounding_box_3D.create_box_OBB(xyz_data, pixel_number);
+
+    //project to x-y, y-z, z-x planes
+    cv::Mat proj_im_OBB[3];
+    m_fuser.bounding_box_3D.project_direct(proj_im_OBB, m_input_size);
+    std::vector<cv::Mat> res;
+    res.push_back(proj_im_OBB[0]);
+    res.push_back(proj_im_OBB[1]);
+    res.push_back(proj_im_OBB[2]);
+
+    return res;
+}
 
 FingerTips HandPoseEstimator::getFingerTipsFromJoints(const std::vector<Point2f>& joints) {
     FingerTips tips(5);
