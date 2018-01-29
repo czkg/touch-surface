@@ -1,0 +1,167 @@
+<html>
+<head>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/d3/4.6.0/d3.min.js"></script>
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <style>
+        svg {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+    </style>
+</head>
+<style>
+body {
+    text-align: center;
+    font-family: Sans-serif;
+    margin: 0;
+}
+#canvas {
+    background-color: black;
+}
+</style>
+<body>
+    <svg id="canvas" width="1280" height="800">
+  
+  <!-- <g transform="translate(50,25)" >
+    <rect x="0" y="0" width="650" height="50" style="fill-opacity:0" stroke="lightgrey" stroke-width="3"/>
+    <text id="n0" x="5" y="38" font-family="Verdana" font-size="42" font-weight="100" fill="white" text-anchor="start">Seperate the Cap from the Screw in A</text>
+  </g> -->
+
+  <!-- <g transform="translate(50,25)" >
+    <rect x="0" y="0" width="870" height="50" style="fill-opacity:0" stroke="lightgrey" stroke-width="3"/>
+    <text id="n1" x="5" y="38" font-family="Verdana" font-size="42" font-weight="100" fill="white" text-anchor="start">Install the Screw in A into the C-Shape clamp in B</text>
+  </g> -->
+
+  <!-- <g transform="translate(50,25)" >
+    <rect x="0" y="0" width="700" height="50" style="fill-opacity:0" stroke="lightgrey" stroke-width="3"/>
+    <text id="n2" x="5" y="38" font-family="Verdana" font-size="42" font-weight="100" fill="white" text-anchor="start">Reinstall the Cap in A on the Screw in B</text>
+  </g> -->
+
+  <!-- <g>
+    <rect class="instructionBoxIni" x="50" y="25" width="650" height="50" style="fill-opacity:0" stroke="white" stroke-width="3"></rect>
+    <text x="55" y="63" font-family="Verdana" font-size="42" font-weight="100" fill="white" text-anchor="start">Seperate the Cap from the Screw in A</text>
+  </g> -->
+
+  <g>
+    <text id="instruction" x="55" y="63" font-family="Verdana" font-size="42" font-weight="100" fill="white" text-anchor="start"></text>
+  </g>
+
+  <g transform="translate(30,100)" >
+    <rect id="A" x="0" y="0" width="560" height="400" style="fill-opacity:0" stroke="red" stroke-width="3"/>
+    <text x="280" y="250" font-family="Verdana" font-size="200" fill="white" fill-opacity="0.4" text-anchor="middle">A</text>
+  </g>
+   
+  <g transform="translate(690,100)">
+    <rect id="B" x="0" y="0" width="560" height="400" style="fill-opacity:0" stroke="red" stroke-width="3"/>
+    <text x="280" y="250" font-family="Verdana" font-size="200" fill="white" fill-opacity="0.4" text-anchor="middle">B</text>
+  </g>
+
+  <g transform="translate(15,525)">
+    <rect id="back" x="0" y="0" width="280" height="150" rx="10" ry="10" style="fill:lightskyblue" stroke="lightgrey" stroke-width="1"/>
+    <text x="140" y="93" font-family="Verdana" font-size="65" text-anchor="middle">BACK</text>
+  </g>
+
+  <g transform="translate(985,525)">
+    <rect id="next" x="0" y="0" width="280" height="150" rx="10" ry="10" style="fill:yellowgreen" stroke="lightgrey" stroke-width="1"/>
+    <text x="140" y="93" font-family="Verdana" font-size="65" text-anchor="middle">NEXT</text>
+  </g>
+  
+
+    </svg>
+
+    <script>
+    var current = 0;
+    var textname = "text#n";
+    var texts = ["Detach the Cap from the Screw in A", "Install the Screw in A into the C-Shape clamp in B", "Attach the Cap in A to the Screw in B"];
+    var width = ["630","870","650"];
+
+
+    function WebSocketRun() {
+        //var canvas = d3.select("#canvas");
+
+        if ("WebSocket" in window) {
+            console.log("WebSocket is supported by your Browser!");
+
+            // Let us open a web socket
+            var ws = new WebSocket("ws://localhost:9002/");
+
+            ws.onopen = function()
+            {
+                // Web Socket is connected, send data using send()
+            };
+
+            ws.onmessage = function (evt)
+            {
+                var receivedTouches = $.parseJSON(evt.data);
+                // console.log(receivedTouches);
+
+                // canvas.selectAll(".touch-point").remove();
+                if (receivedTouches == null) {
+                  d3.select("rect#back").style("fill","lightskyblue");
+                  d3.select("rect#next").style("fill","yellowgreen");
+                  return;
+                }
+
+                receivedTouches.forEach((e)=>{
+                  findContainingKey(e.x, e.y);
+                });
+            };
+
+            ws.onclose = function()
+            {
+                // websocket is closed.
+                console.log("Connection is closed...");
+            };
+        } else {
+            // The browser doesn't support WebSocket
+            alert("WebSocket NOT supported by your Browser!");
+        }
+    }
+
+    function findContainingKey(x, y) {
+      d3.selectAll("g").each(function() {
+        var bbox = this.getBoundingClientRect();
+          if (x > bbox.left && x < bbox.right &&
+              y > bbox.top && y < bbox.bottom && bbox.top > 500) {
+            d3.select(this)
+              .select("rect")
+              .style("fill","red")
+            d3.select("rect.instructionBox").remove();
+
+            d3.select("svg").append("rect")
+              .classed("instructionBox", true)
+              .transition()
+              .attr("x", "50")
+              .attr("y", "25")
+              .attr("width", width[current])
+              .attr("height", "50")
+              .style("fill-opacity", "0")
+              .style("stroke", "white")
+              .style("stroke-width", "3")
+              .duration(1000);
+                    
+            d3.select("text#instruction").text(texts[current]).transition().duration(1000);
+            current++;
+            if(current == 3) {
+              current = 0;
+            }
+          }
+      });
+    }
+
+    $(()=>{
+        WebSocketRun();
+        // Size canvas
+        const svg = d3.select('#canvas')
+                      .attr('width', 1280)  // extra width space
+                      .attr('height', 800)
+                      .attr('viewBox', '0 0 1280 800');
+
+    });
+    </script>
+</body>
+</html>

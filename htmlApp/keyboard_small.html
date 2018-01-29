@@ -1,0 +1,444 @@
+<html>
+<head>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/d3/4.6.0/d3.min.js"></script>
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <style>
+        svg {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+    </style>
+</head>
+<style>
+body {
+    text-align: center;
+    font-family: Sans-serif;
+    margin: 0;
+}
+#canvas {
+    background-color: black;
+}
+</style>
+<body>
+    <svg id="canvas" width="1280" height="800">
+
+  <g transform="translate(207, 296)">
+    <rect width="866" height="350" style="fill-opacity:0;stroke-width:3;stroke:rgb(150,150,150)" />
+  </g>
+  
+  <!-- first line -->
+  <g transform="translate(213,302)" >
+    <rect id="q" x="0" y="0" width="80" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="40" y="52" font-family="Verdana" font-size="50" text-anchor="middle">q</text>
+  </g>
+   
+  <g transform="translate(299,302)">
+    <rect id="w" x="0" y="0" width="80" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="40" y="52" font-family="Verdana" font-size="50" text-anchor="middle">w</text>
+  </g>
+  
+  
+  <g transform="translate(385,302)">
+    <rect id="e" x="0" y="0" width="80" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="40" y="52" font-family="Verdana" font-size="50" text-anchor="middle">e</text>
+  </g>
+  
+  <g transform="translate(471,302)">
+    <rect id="r" x="0" y="0" width="80" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="40" y="52" font-family="Verdana" font-size="50" text-anchor="middle">r</text>
+  </g>
+  
+  <g transform="translate(557,302)">
+    <rect id="t" x="0" y="0" width="80" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="40" y="52" font-family="Verdana" font-size="50" text-anchor="middle">t</text>
+  </g>
+  
+  
+  <g transform="translate(643,302)">
+    <rect id="y" x="0" y="0" width="80" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="40" y="52" font-family="Verdana" font-size="50" text-anchor="middle">y</text>
+  </g>
+  
+  <g transform="translate(729,302)">
+    <rect id="u" x="0" y="0" width="80" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="40" y="52" font-family="Verdana" font-size="50" text-anchor="middle">u</text>
+  </g>
+  
+  <g transform="translate(815,302)">
+    <rect id="i" x="0" y="0" width="80" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="40" y="52" font-family="Verdana" font-size="50" text-anchor="middle">i</text>
+  </g>
+  
+  <g transform="translate(901,302)">
+    <rect id="o" x="0" y="0" width="80" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="40" y="52" font-family="Verdana" font-size="50" text-anchor="middle">o</text>
+  </g>
+  
+  <g transform="translate(987,302)">
+    <rect id="p" x="0" y="0" width="80" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="40" y="52" font-family="Verdana" font-size="50" text-anchor="middle">p</text>
+  </g>
+  
+  <!-- second line -->
+  
+  <g transform="translate(256,388)">
+    <rect id="a" x="0" y="0" width="80" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="40" y="52" font-family="Verdana" font-size="50" text-anchor="middle">a</text>
+  </g>
+  
+  <g transform="translate(342,388)">
+    <rect id="s" x="0" y="0" width="80" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="40" y="52" font-family="Verdana" font-size="50" text-anchor="middle">s</text>
+  </g>
+  
+  <g transform="translate(428,388)">
+    <rect id="d" x="0" y="0" width="80" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="40" y="52" font-family="Verdana" font-size="50" text-anchor="middle">d</text>
+  </g>
+  
+  <g transform="translate(514,388)">
+    <rect id="f" x="0" y="0" width="80" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="40" y="52" font-family="Verdana" font-size="50" text-anchor="middle">f</text>
+  </g>
+  
+  <g transform="translate(600,388)">
+    <rect id="g" x="0" y="0" width="80" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="40" y="52" font-family="Verdana" font-size="50" text-anchor="middle">g</text>
+  </g>
+  
+  <g transform="translate(686,388)">
+    <rect id="h" x="0" y="0" width="80" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="40" y="52" font-family="Verdana" font-size="50" text-anchor="middle">h</text>
+  </g>
+  
+  <g transform="translate(772,388)">
+    <rect id="j" x="0" y="0" width="80" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="40" y="52" font-family="Verdana" font-size="50" text-anchor="middle">j</text>
+  </g>
+  
+  <g transform="translate(858,388)">
+    <rect id="k" x="0" y="0" width="80" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="40" y="52" font-family="Verdana" font-size="50" text-anchor="middle">k</text>
+  </g>
+  
+  <g transform="translate(944,388)">
+    <rect id="l" x="0" y="0" width="80" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="40" y="52" font-family="Verdana" font-size="50" text-anchor="middle">l</text>
+  </g>
+ 
+  
+  <!-- Third line -->
+  <g transform="translate(213,474)">
+    <rect id="shift" x="0" y="0" width="110" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="55" y="52" font-family="Verdana" font-size="50" text-anchor="middle">&#8679</text>
+  </g>
+  
+  <g transform="translate(342,474)">
+    <rect id="z" x="0" y="0" width="80" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="40" y="52" font-family="Verdana" font-size="50" text-anchor="middle">z</text>
+  </g>
+  
+  <g transform="translate(428,474)">
+    <rect id="x" x="0" y="0" width="80" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="40" y="52" font-family="Verdana" font-size="50" text-anchor="middle">x</text>
+  </g>
+  
+  <g transform="translate(514,474)">
+    <rect id="c" x="0" y="0" width="80" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="40" y="52" font-family="Verdana" font-size="50" text-anchor="middle">c</text>
+  </g>
+  
+  <g transform="translate(600,474)">
+    <rect id="v" x="0" y="0" width="80" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="40" y="52" font-family="Verdana" font-size="50" text-anchor="middle">v</text>
+  </g>
+  
+  <g transform="translate(686,474)">
+    <rect id="b" x="0" y="0" width="80" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="40" y="52" font-family="Verdana" font-size="50" text-anchor="middle">b</text>
+  </g>
+  
+  <g transform="translate(772,474)">
+    <rect id="n" x="0" y="0" width="80" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="40" y="52" font-family="Verdana" font-size="50" text-anchor="middle">n</text>
+  </g>
+  
+  <g transform="translate(858,474)">
+    <rect id="m" x="0" y="0" width="80" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="40" y="52" font-family="Verdana" font-size="50" text-anchor="middle">m</text>
+  </g>
+  
+  <g transform="translate(957,474)">
+    <rect id="back" x="0" y="0" width="110" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="55" y="52" font-family="Verdana" font-size="50" text-anchor="middle">&#8678</text>
+  </g>
+  
+  <!-- forth line -->
+  <g transform="translate(428,560)">
+    <rect id="space" x="0" y="0" width="424" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="212" y="52" font-family="Verdana" font-size="50" text-anchor="middle">space</text>
+  </g>
+  
+  <g transform="translate(858,560)">
+    <rect id="enter" x="0" y="0" width="209" height="80" rx="15" ry="15" style="fill:lightgrey"/>
+    <text x="104.5" y="52" font-family="Verdana" font-size="50" text-anchor="middle">enter</text>
+  </g>
+
+  <!-- type area -->
+  <g transform="translate(5,5)">
+    <rect id="area" width="1270" height="260" style="fill-opacity:0;stroke-width:5;stroke:rgb(150,150,150)" />
+  </g>
+
+  <g>
+    <text id="type0" x="25" y="60" font-family="Verdana" font-size="65" text-anchor="start" style="fill:lightgrey"></text>
+  </g>
+
+  <g>
+    <text id="type1" x="25" y="125" font-family="Verdana" font-size="65" text-anchor="start" style="fill:lightgrey"></text>
+  </g>
+
+  <g>
+    <text id="type2" x="25" y="190" font-family="Verdana" font-size="65" text-anchor="start" style="fill:lightgrey"></text>
+  </g>
+
+  <g>
+    <text id="type3" x="25" y="255" font-family="Verdana" font-size="65" text-anchor="start" style="fill:lightgrey"></text>
+  </g>
+
+  <!-- <g>
+    <text id="type4" x="25" y="320" font-family="Verdana" font-size="65" text-anchor="start" style="fill:lightgrey"></text>
+  </g> -->
+
+    </svg>
+
+    <script>
+    function WebSocketRun() {
+        var canvas = d3.select("#canvas");
+        var colors = ["red", "blue", "yellow", "green", "purple", "white"];
+        var alltexts = new Array(4);
+        alltexts.fill("");
+        var currentRow = 0;
+        var textname = "text#type";
+        var totalWidth = 1180;
+        var isShift = false;
+        var isShow = false;
+        var isRecord = false;
+        var isRecordLast = false;
+
+        document.addEventListener("keydown", (event) => {
+          if(event.keyCode == 82) {
+            isRecord = !isRecord;
+          }
+        })
+
+        setInterval(function(){
+          isShow = !isShow;
+          if(isShow) {
+            alltexts[currentRow] += "|";
+          }
+          else {
+            alltexts[currentRow] = alltexts[currentRow].slice(0, -1);
+          }
+          for(idx = 0; idx < 4; idx++) {
+            var selector = textname + idx.toString().trim();
+            d3.select(selector).text(alltexts[idx]);
+          } 
+        }, 1000);
+
+        function holdBack(x, y) {
+          d3.selectAll("g").each(function() {
+            var bbox = this.getBoundingClientRect();
+            if(x > bbox.left && x < bbox.right &&
+               y > bbox.top && y < bbox.bottom) {
+              if(d3.select(this).select("rect").attr('id') == "back") {
+                findContainingKey(x, y);
+              }
+            }
+          });
+        }
+
+        function findContainingKey(x, y, finger, state) {
+            d3.selectAll("g").each(function() {
+                var bbox = this.getBoundingClientRect();
+                if (x > bbox.left && x < bbox.right &&
+                    y > bbox.top && y < bbox.bottom) {
+                    d3.select(this)
+                    .select("rect")
+                    .style("fill","red");
+                    var val = d3.select(this).text();
+                    var id = d3.select(this).select("rect").attr("id");
+                    if(id == null) {
+                      return;
+                    }
+                    val = val.trim();
+                    var lineval;
+
+                    if(isShow) {
+                      alltexts[currentRow] = alltexts[currentRow].slice(0, -1);
+                    }
+
+                    if(val == "space") {
+                        val = " ";
+                    }
+                    if(id == 'shift') {
+                      val = "";
+                      isShift = !isShift;
+                    }
+                    if(val == "enter") {
+                        val = "";
+                        if(currentRow < 3) {
+                            currentRow++;
+                        }
+                    }
+                    if(id == "back") {
+                        val = "";
+                        if(alltexts[currentRow].length > 0) {
+                            alltexts[currentRow] = alltexts[currentRow].slice(0, -1);
+                        }
+                        else {
+                            if(currentRow != 0) {
+                                currentRow--;
+                                alltexts[currentRow] = alltexts[currentRow].slice(0, -1);
+                            }
+                        }
+                    }
+                    if(val != "" && val != " " && isShift == true) {
+                      val = val.toUpperCase();
+                    }
+                    var selector = textname + currentRow.toString().trim();
+                    var currentWidth;
+                    try {
+                        currentWidth = d3.select(selector).node().getComputedTextLength();
+                    }
+                    catch (e) {
+                        currentWidth = 0;
+
+                    }
+                    if(currentWidth > totalWidth && currentRow < 3) {
+                        currentRow++;
+                        currentWidth = 0;
+                    }
+                    if(currentWidth < totalWidth) {
+                        alltexts[currentRow] += val;
+                    }
+                    if(isShow) {
+                      alltexts[currentRow] += "|";
+                    }
+                    var idx;
+                    for(idx = 0; idx <= currentRow; idx++) {
+                        selector = textname + idx.toString().trim();
+                        d3.select(selector).text(alltexts[idx]);
+                    }
+
+                    //send data to writeFiles
+                    if(isRecord) {
+                      var time = Math.round(new Date().getTime() / 1000);
+                      $.ajax({
+                        url: "http://127.0.0.1:5000",
+                        type: "POST",
+                        data: {'key': id,
+                               'time': time,
+                               'x' : x, 
+                               'y' : y,
+                               'finger' : finger,
+                               'state' : state,
+                               'isRecordLast' : isRecordLast},
+                      });
+                    }
+                    isRecordLast = isRecord;
+                }
+            });
+        }
+
+
+        if ("WebSocket" in window) {
+            console.log("WebSocket is supported by your Browser!");
+
+            // Let us open a web socket
+            var ws = new WebSocket("ws://localhost:9002/");
+
+            ws.onopen = function()
+            {
+                // Web Socket is connected, send data using send()
+            };
+
+            ws.onmessage = function (evt)
+            {
+                var receivedTouches = $.parseJSON(evt.data);
+                // console.log(receivedTouches);
+
+                // canvas.selectAll(".touch-point").remove();
+                if (receivedTouches == null) {
+                    d3.selectAll("g").each(function() {
+                        d3.select(this)
+                        .select("rect")
+                        .style("fill","lightgrey");
+                        // d3.select("rect.rectdis").remove();
+                        // d3.select("text.textdis").remove();
+                    });
+                    if(isShift) {
+                      d3.select("rect#shift").style("fill", "red");
+                    }
+                    return;
+                }
+
+                receivedTouches.forEach((e)=>{
+                    // canvas.append("circle")
+                    //     .classed("touch-point", true)
+                    //     .attr("cx", e.x)
+                    //     .attr("cy", e.y)
+                    //     .attr("r", 20)
+                    //     .style("fill", colors[e.finger]);
+
+                    // canvas.append("rect")
+                    //     .classed("rectdis", true)
+                    //     .attr("x", 60)
+                    //     .attr("y", 490)
+                    //     .attr("width", 150)
+                    //     .attr("height", 100)
+                    //     .attr("stroke", "white")
+                    //     .attr("stroke-width", 5)
+                    //     .attr("fill-opacity", 0);
+                    // canvas.append("text")
+                    //     .classed("textdis", true)
+                    //     .attr("x", 35)
+                    //     .attr("y", 25)
+                    //     .style("fill", "lightgrey")
+                    //     .style("font-size", "40px")
+                    //     .style("text-anchor", "start")
+                    if(e.state == 0) {
+                      findContainingKey(e.x, e.y, e.finger, e.state);
+                    }
+                    else if(e.state != 3 && isShift) {
+                      holdBack(e.x, e.y);
+                    }
+                });
+            };
+
+            ws.onclose = function()
+            {
+                // websocket is closed.
+                console.log("Connection is closed...");
+            };
+        } else {
+            // The browser doesn't support WebSocket
+            alert("WebSocket NOT supported by your Browser!");
+        }
+    }
+
+    $(()=>{
+        WebSocketRun();
+        // Size canvas
+        const svg = d3.select('#canvas')
+                      .attr('width', 1280)  // extra width space
+                      .attr('height', 800)
+                      .attr('viewBox', '0 0 1280 800');
+
+    });
+    </script>
+</body>
+</html>
