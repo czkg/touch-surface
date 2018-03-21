@@ -17,7 +17,10 @@ using namespace std;
 using namespace HandPoseUtils;
 using namespace TouchDetectionUtils;
 
-const float focal_length = 21.65; //mm
+const float focal_length_x = 367.049
+const float focal_length_y = 367.049
+
+#define PCL_PATH "../pca/pca.ext"
 
 void HandPoseEstimator::initialize(const std::string& modelFilename, const std::string& weightsFilename_xy, const std::string& weightsFilename_yz, const std::string& weightsFilename_zx) {
     using caffe::Caffe;
@@ -39,7 +42,7 @@ FingerTips HandPoseEstimator::process(const cv::Mat& depthInput, const cv::Mat& 
     Mat depth = depthInput.clone();
 
     depth /= 1000.0;
-    depth.setTo(2.0, ~mask); //remove background
+    //depth.setTo(2.0, ~mask); //remove background
 
     // Mat norDepth = depth.clone();
     // double maxv = -10.0;
@@ -51,10 +54,10 @@ FingerTips HandPoseEstimator::process(const cv::Mat& depthInput, const cv::Mat& 
     cv::Rect rectOfRoi = Preprocess::findRect(mask); //find tl of the roi
     const cv::Point2f roiTL = rectOfRoi.tl();
 
-    cv::Mat_<float> roi = Preprocess::findROI(depth); //not square yet
-    std::vector<int> info = Preprocess::getSquareImage(roi);
-    cv::Mat origRoi;
-    roi.copyTo(origRoi); //for calculating roi_width
+    cv::Mat_<float> roi = Preprocess::findROI(depth, mask); //not square yet
+    //std::vector<int> info = Preprocess::getSquareImage(roi);
+    //cv::Mat origRoi;
+    //roi.copyTo(origRoi); //for calculating roi_width
 
     /*------------------------------Projection----------------------------*/
     //project roi to 3 different planes
@@ -84,18 +87,23 @@ FingerTips HandPoseEstimator::process(const cv::Mat& depthInput, const cv::Mat& 
         inputs[0].copyTo(input_high_xy);
         inputs[1].copyTo(input_high_yz);
         inputs[2].copyTo(input_high_zx);
-        cv::resize(inputs[0], input_mid_xy,  cv::Size(m_input_size / 2, m_input_size / 2), 0, 0, cv::INTER_AREA);
-        cv::resize(inputs[1], input_mid_yz,  cv::Size(m_input_size / 2, m_input_size / 2), 0, 0, cv::INTER_AREA);
-        cv::resize(inputs[2], input_mid_zx,  cv::Size(m_input_size / 2, m_input_size / 2), 0, 0, cv::INTER_AREA);
-        cv::resize(inputs[0], input_low_xy,  cv::Size(m_input_size / 4, m_input_size / 4), 0, 0, cv::INTER_AREA);
-        cv::resize(inputs[1], input_low_yz,  cv::Size(m_input_size / 4, m_input_size / 4), 0, 0, cv::INTER_AREA);
-        cv::resize(inputs[2], input_low_zx,  cv::Size(m_input_size / 4, m_input_size / 4), 0, 0, cv::INTER_AREA);
+
+        cv::resize(input_high_xy, input_mid_xy,  cv::Size(m_input_size / 2, m_input_size / 2), 0, 0, cv::INTER_AREA);
+        cv::resize(input_high_yz, input_mid_yz,  cv::Size(m_input_size / 2, m_input_size / 2), 0, 0, cv::INTER_AREA);
+        cv::resize(input_high_zx, input_mid_zx,  cv::Size(m_input_size / 2, m_input_size / 2), 0, 0, cv::INTER_AREA);
+
+        cv::resize(input_high_xy, input_low_xy,  cv::Size(m_input_size / 4, m_input_size / 4), 0, 0, cv::INTER_AREA);
+        cv::resize(input_high_yz, input_low_yz,  cv::Size(m_input_size / 4, m_input_size / 4), 0, 0, cv::INTER_AREA);
+        cv::resize(input_high_zx, input_low_zx,  cv::Size(m_input_size / 4, m_input_size / 4), 0, 0, cv::INTER_AREA);
+
         imgs_xy.push_back(Preprocess::filter(input_high_xy));
         imgs_xy.push_back(Preprocess::filter(input_mid_xy));
         imgs_xy.push_back(Preprocess::filter(input_low_xy));
+
         imgs_yz.push_back(Preprocess::filter(input_high_yz));
         imgs_yz.push_back(Preprocess::filter(input_mid_yz));
         imgs_yz.push_back(Preprocess::filter(input_low_yz));
+
         imgs_zx.push_back(Preprocess::filter(input_high_zx));
         imgs_zx.push_back(Preprocess::filter(input_mid_zx));
         imgs_zx.push_back(Preprocess::filter(input_low_zx));
@@ -108,8 +116,6 @@ FingerTips HandPoseEstimator::process(const cv::Mat& depthInput, const cv::Mat& 
     std::vector<float> result_zx = m_inference_zx.Predict(imgs_zx);
 
     const int numberOfJoints = (m_isFingerTipDetector) ? 5 : 20;
-    std::vector<Point2f> joints(numberOfJoints);
-
     const int heatmap_size = m_heatmap_width * m_heatmap_width;
     const int roi_width = origRoi.cols;
 
@@ -120,21 +126,28 @@ FingerTips HandPoseEstimator::process(const cv::Mat& depthInput, const cv::Mat& 
     }
 
     /*------------------------------Fusion------------------------------*/
+    m_fuser.load_pcl(PCL_PATH);
     m_fuser.get_proj_bounding_box();
     float xyz_estimated[numberOfJoints * 3];
     m_fuser.fuse(xyz_estimated);
 
     /*----------------------------Get joints----------------------------*/
-    for(int i = 0; i < numberOfJoints; i++) {
-        float x = xyz_estimated[i * 3] / (float)m_input_size * (float)roi_width;
-        float y = xyz_estimated[i * 3 + 1] / (float)m_input_size * (float)roi_width;
-        x -= (float)info[0];
-        y -= (float)info[1];
-        x = (x < 0) ? 0.0 : x;
-        y = (y < 0) ? 0.0 : y;
+    float uvd_estimated[numberOfJoints * 3];
+    convertWorldCoordinatesToDepth(xyz_estimated, uvd_estimated, pixel_number, roi.cols, roi.rows);
+    std::vector<Point2f> joints(numberOfJoints);
 
-        x += (float)roiTL.x;
-        y += (float)roiTL.y;
+    for(int i = 0; i < numberOfJoints; i++) {
+        // float x = xyz_estimated[i * 3] / (float)m_input_size * (float)roi_width;
+        // float y = xyz_estimated[i * 3 + 1] / (float)m_input_size * (float)roi_width;
+        // x -= (float)info[0];
+        // y -= (float)info[1];
+        // x = (x < 0) ? 0.0 : x;
+        // y = (y < 0) ? 0.0 : y;
+
+        // x += (float)roiTL.x;
+        // y += (float)roiTL.y;
+        float x = uvd_estimated[i * 3] + (float)roiTL.x;
+        float y = uvd_estimated[i * 3 + 1] + (float)roiTL.y;
         joints[i] = Point2f(x, y);
     }
 
@@ -194,24 +207,29 @@ void HandPoseEstimator::convertDepthImageToProjective(const cv::Mat_<float>& dep
     } 
 }
 
-void HandPoseEstimator::convertDepthToWorldCoordinates(const float* uvd, float* xyz) {
-    int count = sizeof(uvd) / sizeof(uvd[0]) / 3;
-    int width = std::sqrt(count);
-    int height = width;
+void HandPoseEstimator::convertDepthToWorldCoordinates(const float* uvd, float* xyz, const int& count, const int& width, const int& height) {
     for (int i = 0; i < count; i++) {
-        xyz[i * 3] = -(float(width)/2 - uvd[i * 3]) * (25. / 640.) * uvd[i * 3 + 2] / focal_length;
-        xyz[i * 3 + 1] = -(uvd[i * 3 + 1] - float(height) / 2) * (18.75 / 480.) * uvd[i * 3 + 2] / focal_length;
+        xyz[i * 3] = -(float(width)/2 - uvd[i * 3]) * uvd[i * 3 + 2] / focal_length_x;
+        xyz[i * 3 + 1] = -(uvd[i * 3 + 1] - float(height) / 2) * uvd[i * 3 + 2] / focal_length_y;
         xyz[i * 3 + 2] = uvd[i * 3 + 2];
     }
 }
 
+void HandPoseEstimator::convertWorldCoordinatesToDepth(const float* xyz, float* uvd, const int& count, const int& width, const int& height) {
+    for (int i = 0; i < count; i++) {
+        uvd[i * 3] = float(width)/2 + xyz[i * 3] * focal_length_x / xyz[i * 3 + 2];
+        uvd[i * 3 + 1] = float(height) / 2 - xyz[i * 3 + 1] * focal_length_y / xyz[i * 3 + 2];
+        uvd[i * 3 + 2] = xyz[i * 3 + 2];
+    }
+}
+
 std::vector<cv::Mat> HandPoseEstimator::projection(const cv::Mat& roi) {
-    int pixel_number = roi.rows * roi.cols; //roi is a square, which means width = height
+    int pixel_number = roi.rows * roi.cols;
     float xyz_data[pixel_number * 3];
     float uvd_data[pixel_number * 3];
 
     convertDepthImageToProjective(roi, uvd_data);
-    convertDepthToWorldCoordinates(uvd_data, xyz_data);
+    convertDepthToWorldCoordinates(uvd_data, xyz_data, pixel_number, roi.cols, roi.rows);
 
     //create the bounding box
     m_fuser.bounding_box_3D.create_box_OBB(xyz_data, pixel_number);

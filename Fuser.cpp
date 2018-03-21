@@ -6,7 +6,7 @@
 #include <time.h>
 
 #define HEAT_NUM 20
-#define HEAT_SZ 18
+#define HEAT_SZ 20
 #define OUT_SZ 96
 
 //#define PCA_SZ 20	// 1 ~ 60
@@ -42,10 +42,10 @@ void Fuser::fuse(float* estimate_xyz)	// joint optimization using covariance
 {
 	for (int i = 0; i < 3; ++i)
 	{
-		bounding_box_x_18[i] = (bounding_box_x[i] * HEAT_SZ) / OUT_SZ;
-		bounding_box_y_18[i] = (bounding_box_y[i] * HEAT_SZ) / OUT_SZ;
-		bounding_box_width_18[i] = (bounding_box_width[i] * HEAT_SZ) / OUT_SZ;
-		bounding_box_height_18[i] = (bounding_box_height[i] * HEAT_SZ) / OUT_SZ;
+		bounding_box_x_20[i] = (bounding_box_x[i] * HEAT_SZ) / OUT_SZ;
+		bounding_box_y_20[i] = (bounding_box_y[i] * HEAT_SZ) / OUT_SZ;
+		bounding_box_width_20[i] = (bounding_box_width[i] * HEAT_SZ) / OUT_SZ;
+		bounding_box_height_20[i] = (bounding_box_height[i] * HEAT_SZ) / OUT_SZ;
 	}
 
 	// 1. calculate mean and variance for each joint point
@@ -55,15 +55,15 @@ void Fuser::fuse(float* estimate_xyz)	// joint optimization using covariance
 	int joint_i = 0;
 	for (joint_i = 0; joint_i < HEAT_NUM; ++joint_i)
 	{
-		Float4 mean_18;
-		if (!estimate_gauss_mean_covariance(joint_i, mean_18, joints_covariance_bb[joint_i]))
+		Float4 mean_20;
+		if (!estimate_gauss_mean_covariance(joint_i, mean_20, joints_covariance_bb[joint_i]))
 		{
 			break;
 		}
 
-		xyz_18_96(mean_18, joints_means_bb[joint_i]);
+		xyz_20_96(mean_20, joints_means_bb[joint_i]);
 		
-		Float3x3::scale(joints_covariance_bb[joint_i], k);	// covariance_18 in 18 x 18 3d space ---> covariance_96 in 96 x 96 3d space
+		Float3x3::scale(joints_covariance_bb[joint_i], k);	// covariance_20 in 20 x 20 3d space ---> covariance_96 in 96 x 96 3d space
 		Float3x3::inverse(joints_inv_covariance_bb[joint_i], joints_covariance_bb[joint_i]);
 	}
 	if (joint_i<HEAT_NUM)
@@ -125,27 +125,27 @@ void Fuser::fuse(float* estimate_xyz)	// joint optimization using covariance
 		}
 		//*
 		//////////////draw estimate points on heat-maps//////////////
-		Float4 estimate_pt_18;
-		xyz_96_18(estimate_pt, estimate_pt_18);
-		int u, v;
-		_3d_xy(estimate_pt_18[0], estimate_pt_18[1], u, v);
-		if (u < 0 || v < 0 || u >= HEAT_SZ || v >= HEAT_SZ)
-		{
-			cout << "Joint " << i_joint << ": xy out" << endl;
-		}
-		cv::circle(heatmaps_vec[i_joint * 3], cv::Point(u, v), 2, cv::Scalar(0, 0, 255, 0), CV_FILLED, CV_AA, 0);
-		_3d_yz(estimate_pt_18[1], estimate_pt_18[2], u, v);
-		if (u < 0 || v < 0 || u >= HEAT_SZ || v >= HEAT_SZ)
-		{
-			cout << "Joint " << i_joint << ": yz out" << endl;
-		}
-		cv::circle(heatmaps_vec[i_joint * 3 + 1], cv::Point(u, v), 2, cv::Scalar(0, 0, 255, 0), CV_FILLED, CV_AA, 0);
-		_3d_zx(estimate_pt_18[2], estimate_pt_18[0], u, v);
-		if (u < 0 || v < 0 || u >= HEAT_SZ || v >= HEAT_SZ)
-		{
-			cout << "Joint " << i_joint << ": zx out" << endl;
-		}
-		cv::circle(heatmaps_vec[i_joint * 3 + 2], cv::Point(u, v), 2, cv::Scalar(0, 0, 255, 0), CV_FILLED, CV_AA, 0);
+		// Float4 estimate_pt_20;
+		// xyz_96_20(estimate_pt, estimate_pt_20);
+		// int u, v;
+		// _3d_xy(estimate_pt_20[0], estimate_pt_20[1], u, v);
+		// if (u < 0 || v < 0 || u >= HEAT_SZ || v >= HEAT_SZ)
+		// {
+		// 	cout << "Joint " << i_joint << ": xy out" << endl;
+		// }
+		// cv::circle(heatmaps_vec[i_joint * 3], cv::Point(u, v), 2, cv::Scalar(0, 0, 255, 0), CV_FILLED, CV_AA, 0);
+		// _3d_yz(estimate_pt_20[1], estimate_pt_20[2], u, v);
+		// if (u < 0 || v < 0 || u >= HEAT_SZ || v >= HEAT_SZ)
+		// {
+		// 	cout << "Joint " << i_joint << ": yz out" << endl;
+		// }
+		// cv::circle(heatmaps_vec[i_joint * 3 + 1], cv::Point(u, v), 2, cv::Scalar(0, 0, 255, 0), CV_FILLED, CV_AA, 0);
+		// _3d_zx(estimate_pt_20[2], estimate_pt_20[0], u, v);
+		// if (u < 0 || v < 0 || u >= HEAT_SZ || v >= HEAT_SZ)
+		// {
+		// 	cout << "Joint " << i_joint << ": zx out" << endl;
+		// }
+		// cv::circle(heatmaps_vec[i_joint * 3 + 2], cv::Point(u, v), 2, cv::Scalar(0, 0, 255, 0), CV_FILLED, CV_AA, 0);
 		//////////////draw estimate points on heat-maps//////////////
 		//*/
 		Float4 tmp(estimate_pt);
@@ -161,10 +161,10 @@ void Fuser::fuse_sub(float* estimate_xyz)	// respectively optimization
 {
 	for (int i = 0; i < 3; ++i)
 	{
-		bounding_box_x_18[i] = (bounding_box_x[i] * HEAT_SZ) / OUT_SZ;
-		bounding_box_y_18[i] = (bounding_box_y[i] * HEAT_SZ) / OUT_SZ;
-		bounding_box_width_18[i] = (bounding_box_width[i] * HEAT_SZ) / OUT_SZ;
-		bounding_box_height_18[i] = (bounding_box_height[i] * HEAT_SZ) / OUT_SZ;
+		bounding_box_x_20[i] = (bounding_box_x[i] * HEAT_SZ) / OUT_SZ;
+		bounding_box_y_20[i] = (bounding_box_y[i] * HEAT_SZ) / OUT_SZ;
+		bounding_box_width_20[i] = (bounding_box_width[i] * HEAT_SZ) / OUT_SZ;
+		bounding_box_height_20[i] = (bounding_box_height[i] * HEAT_SZ) / OUT_SZ;
 	}
 	Float3 offset_vec(0, 0, 0); //(-3.26, 4.24, -0.32);	//(-0.46716, -0.27824, -1.5545);	//(1.6, -1.2, -1.2);	//
 	for (int i = 0; i < HEAT_NUM; ++i)
@@ -292,12 +292,12 @@ math::Float4 Fuser::estimate_joint_xyz(int joint_i)
 	cv::circle(heatmaps_vec[joint_i * 3 + 2], cv::Point(u, v), 2, cv::Scalar(0, 0, 255, 0), CV_FILLED, CV_AA, 0);
 
 	Float4 pt_96;
-	xyz_18_96(cur_pt, pt_96);
+	xyz_20_96(cur_pt, pt_96);
 
 	return pt_96;
 }
 
-bool Fuser::estimate_gauss_mean_covariance(int joint_i, Float4& mean_18, Float3x3& covariance_18)
+bool Fuser::estimate_gauss_mean_covariance(int joint_i, Float4& mean_20, Float3x3& covariance_20)
 {
 	cv::Mat xy_8bit(HEAT_SZ, HEAT_SZ, CV_8UC1), heat_binary[3];
 	cv::Mat yz_8bit(HEAT_SZ, HEAT_SZ, CV_8UC1);
@@ -376,12 +376,12 @@ bool Fuser::estimate_gauss_mean_covariance(int joint_i, Float4& mean_18, Float3x
 	}
 	for (int i = 0; i < 3; ++i)
 	{
-		mean_18[i] = xyz_sum[i] / conf_sum;
+		mean_20[i] = xyz_sum[i] / conf_sum;
 	}
-	mean_18[3] = 1.0;
+	mean_20[3] = 1.0;
 
 	// 3. get covariance
-	covariance_18.zeros();
+	covariance_20.zeros();
 	Float4 xyz_var(0.0, 0.0, 0.0, 1.0);
 	for (int i = 0; i < 3; ++i)
 	{
@@ -389,23 +389,23 @@ bool Fuser::estimate_gauss_mean_covariance(int joint_i, Float4& mean_18, Float3x
 		{
 			for (int xyz_i = 0; xyz_i < xyz_weights.size(); ++xyz_i)
 			{
-				covariance_18(i, j) += xyz_weights[xyz_i][3] * (xyz_weights[xyz_i][i] - mean_18[i])
-															 * (xyz_weights[xyz_i][j] - mean_18[j]);
+				covariance_20(i, j) += xyz_weights[xyz_i][3] * (xyz_weights[xyz_i][i] - mean_20[i])
+															 * (xyz_weights[xyz_i][j] - mean_20[j]);
 			}
-			covariance_18(i, j) /= conf_sum;
-			covariance_18(j, i) = covariance_18(i, j);
+			covariance_20(i, j) /= conf_sum;
+			covariance_20(j, i) = covariance_20(i, j);
 		}
 	}
 
 	float var_low_limit = 1e-3;
 	for (int i = 0; i < 3; ++i)
 	{
-		if (covariance_18(i,i) < var_low_limit)
+		if (covariance_20(i,i) < var_low_limit)
 		{
-			covariance_18(i, i) = var_low_limit;
+			covariance_20(i, i) = var_low_limit;
 		}
 	}
-	if (Float3x3::det(covariance_18) <= 1)
+	if (Float3x3::det(covariance_20) <= 1)
 	{
 		return false;
 	}
@@ -430,63 +430,63 @@ void Fuser::_2d_3d(int view_type, int u, int v, cv::Point3d& pt)
 
 void Fuser::xy_3d(int u, int v, double& x, double& y)
 {
-	x = (u - bounding_box_x_18[0] + 1) / proj_k[0];
-	y = (v - bounding_box_y_18[0] + 1) / proj_k[0];
+	x = (u - bounding_box_x_20[0] + 1) / proj_k[0];
+	y = (v - bounding_box_y_20[0] + 1) / proj_k[0];
 }
 
 void Fuser::yz_3d(int u, int v, double& y, double& z)
 {
-	y = (u - bounding_box_x_18[1] + 1) / proj_k[1];
-	z = (v - bounding_box_y_18[1] + 1) / proj_k[1];
+	y = (u - bounding_box_x_20[1] + 1) / proj_k[1];
+	z = (v - bounding_box_y_20[1] + 1) / proj_k[1];
 }
 
 void Fuser::zx_3d(int u, int v, double& z, double& x)
 {
-	z = (u - bounding_box_x_18[2] + 1) / proj_k[2];
-	x = (v - bounding_box_y_18[2] + 1) / proj_k[2];
+	z = (u - bounding_box_x_20[2] + 1) / proj_k[2];
+	x = (v - bounding_box_y_20[2] + 1) / proj_k[2];
 }
 
-void Fuser::xyz_18_96(const Float4& xyz_18, Float4& xyz_96)
+void Fuser::xyz_20_96(const Float4& xyz_20, Float4& xyz_96)
 {
-	xyz_96[0] = (OUT_SZ*xyz_18[0]) / HEAT_SZ - bounding_box_3D.get_x_length()/ 2.0;
-	xyz_96[1] = -(OUT_SZ*xyz_18[1]) / HEAT_SZ + bounding_box_3D.get_y_length() / 2.0;
-	xyz_96[2] = (OUT_SZ*xyz_18[2]) / HEAT_SZ - bounding_box_3D.get_z_length() / 2.0;
+	xyz_96[0] = (OUT_SZ*xyz_20[0]) / HEAT_SZ - bounding_box_3D.get_x_length()/ 2.0;
+	xyz_96[1] = -(OUT_SZ*xyz_20[1]) / HEAT_SZ + bounding_box_3D.get_y_length() / 2.0;
+	xyz_96[2] = (OUT_SZ*xyz_20[2]) / HEAT_SZ - bounding_box_3D.get_z_length() / 2.0;
 	xyz_96[3] = 1.0;
 }
 
-void Fuser::xyz_96_18(const Float4& xyz_96, Float4& xyz_18)
+void Fuser::xyz_96_20(const Float4& xyz_96, Float4& xyz_20)
 {
-	xyz_18[0] = (HEAT_SZ * (xyz_96[0] + bounding_box_3D.get_x_length() / 2.0)) / OUT_SZ;
-	xyz_18[1] = -(HEAT_SZ * (xyz_96[1] - bounding_box_3D.get_y_length() / 2.0)) / OUT_SZ;
-	xyz_18[2] = (HEAT_SZ * (xyz_96[2] + bounding_box_3D.get_z_length() / 2.0)) / OUT_SZ;
-	xyz_18[3] = 1.0;
+	xyz_20[0] = (HEAT_SZ * (xyz_96[0] + bounding_box_3D.get_x_length() / 2.0)) / OUT_SZ;
+	xyz_20[1] = -(HEAT_SZ * (xyz_96[1] - bounding_box_3D.get_y_length() / 2.0)) / OUT_SZ;
+	xyz_20[2] = (HEAT_SZ * (xyz_96[2] + bounding_box_3D.get_z_length() / 2.0)) / OUT_SZ;
+	xyz_20[3] = 1.0;
 }
 
 void Fuser::_3d_xy(double x, double y, int& u, int& v)
 {
-	u = int(proj_k[0] * x + bounding_box_x_18[0]);
-	v = int(proj_k[0] * y + bounding_box_y_18[0]);
+	u = int(proj_k[0] * x + bounding_box_x_20[0]);
+	v = int(proj_k[0] * y + bounding_box_y_20[0]);
 
-	//u = int_rounding(proj_k[0] * x + bounding_box_x_18[0]);
-	//v = int_rounding(proj_k[0] * y + bounding_box_y_18[0]);
+	//u = int_rounding(proj_k[0] * x + bounding_box_x_20[0]);
+	//v = int_rounding(proj_k[0] * y + bounding_box_y_20[0]);
 }
 
 void Fuser::_3d_yz(double y, double z, int& u, int& v)
 {
-	u = int(proj_k[1] * y + bounding_box_x_18[1]);
-	v = int(proj_k[1] * z + bounding_box_y_18[1]);
+	u = int(proj_k[1] * y + bounding_box_x_20[1]);
+	v = int(proj_k[1] * z + bounding_box_y_20[1]);
 
-	//u = int_rounding(proj_k[1] * y + bounding_box_x_18[1]);
-	//v = int_rounding(proj_k[1] * z + bounding_box_y_18[1]);
+	//u = int_rounding(proj_k[1] * y + bounding_box_x_20[1]);
+	//v = int_rounding(proj_k[1] * z + bounding_box_y_20[1]);
 }
 
 void Fuser::_3d_zx(double z, double x, int& u, int& v)
 {
-	u = int(proj_k[2] * z + bounding_box_x_18[2]);
-	v = int(proj_k[2] * x + bounding_box_y_18[2]);
+	u = int(proj_k[2] * z + bounding_box_x_20[2]);
+	v = int(proj_k[2] * x + bounding_box_y_20[2]);
 
-	//u = int_rounding(proj_k[2] * z + bounding_box_x_18[2]);
-	//v = int_rounding(proj_k[2] * x + bounding_box_y_18[2]);
+	//u = int_rounding(proj_k[2] * z + bounding_box_x_20[2]);
+	//v = int_rounding(proj_k[2] * x + bounding_box_y_20[2]);
 }
 
 void Fuser::convert_PCA_wld_to_BB()
@@ -537,4 +537,16 @@ void Fuser::get_proj_bounding_box() {
 		bounding_box_width[i] = bounding_box_3D.get_proj_bounding_box()[i].width;
 		bounding_box_height[i] = bounding_box_3D.get_proj_bounding_box()[i].height;
 	}
+}
+
+void Fuser::load_pca(std::string path) {
+	cv::Mat eigenvectors, eigenvalues, mean;
+	cv::FileStorage pca(path, FileStorage::READ);
+	pca["eigenvectors"] >> eigenvectors;
+	pca["eigenvalues"] >> eigenvalues;
+	pca["mean"] >> mean;
+
+	fuser_pca.eigenvectors = eigenvectors;
+	fuser_pca.eigenvalues = eigenvalues;
+	fuser_pca.mean = mean;
 }

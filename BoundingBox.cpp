@@ -188,6 +188,7 @@ bool BoundingBox::project_direct(cv::Mat* proj_im, const int& sz)
 	//cv::Rect xy_bounding_box;
 	//float xy_k = 0.0;
 	proj_im[0] = cv::Mat::ones(sz, sz, CV_32F);
+	proj_im[0] *= 2.;
 	if (m_x_length >= m_y_length)
 	{
 		proj_bounding_box[0].width = sz - (pad * 2.0);
@@ -204,6 +205,14 @@ bool BoundingBox::project_direct(cv::Mat* proj_im, const int& sz)
 	proj_bounding_box[0].y = ((sz - proj_bounding_box[0].height) / 2.0);
 	cv::Mat xy_roi = proj_im[0](proj_bounding_box[0]);
 
+	float min = 1000;
+	float max = -1000;
+	for (int i = 0; i < m_xyz_data.size(); ++i) {
+		float depth = (m_xyz_data[i][2] + m_z_length / 2.0) / m_z_length;
+		if (depth < 0)     depth = 0.0f;
+		if (depth < min)   min = depth;
+		if (depth > max)   max = depth;
+	}
 	for (int i = 0; i < m_xyz_data.size(); ++i)
 	{
 		int xy_u = int_rounding(proj_k[0]*(m_xyz_data[i][0] + m_x_length / 2.0));
@@ -220,16 +229,21 @@ bool BoundingBox::project_direct(cv::Mat* proj_im, const int& sz)
 		{
 			norm_depth = 0.0f;
 		}
+		
 		if (xy_roi.at<float>(xy_v, xy_u) > norm_depth)		// set the nearest point
 		{
-			xy_roi.at<float>(xy_v, xy_u) = norm_depth;
+			float tmp = 1 / (max - min) * (norm_depth - min) + 0;
+			xy_roi.at<float>(xy_v, xy_u) = tmp;
 		}
 	}
+
+	cv::medianBlur(proj_im[0], proj_im[0], 5);
 
 	// 1. y-z
 	//cv::Rect yz_bounding_box;
 	//float yz_k = 0.0;
 	proj_im[1] = cv::Mat::ones(sz, sz, CV_32F);
+	proj_im[1] *= 2.;
 	if (m_y_length >= m_z_length)
 	{
 		proj_bounding_box[1].width = sz - (pad * 2.0);
@@ -246,6 +260,14 @@ bool BoundingBox::project_direct(cv::Mat* proj_im, const int& sz)
 	proj_bounding_box[1].y = ((sz - proj_bounding_box[1].height) / 2.0);
 	cv::Mat yz_roi = proj_im[1](proj_bounding_box[1]);
 
+	min = 1000;
+	max = -1000;
+	for (int i = 0; i < m_xyz_data.size(); ++i) {
+		float depth = (-m_xyz_data[i][0] + m_x_length / 2.0) / m_x_length;
+		if (depth < 0)     depth = 0.0f;
+		if (depth < min)   min = depth;
+		if (depth > max)   max = depth;
+	}
 	for (int i = 0; i < m_xyz_data.size(); ++i)
 	{
 		int yz_u = int_rounding(proj_k[1]*(-m_xyz_data[i][1] + m_y_length / 2.0));
@@ -262,16 +284,21 @@ bool BoundingBox::project_direct(cv::Mat* proj_im, const int& sz)
 		{
 			norm_depth = 0.0f;
 		}
+		
 		if (yz_roi.at<float>(yz_v, yz_u) > norm_depth)		// set the nearest point
 		{
-			yz_roi.at<float>(yz_v, yz_u) = norm_depth;
+			float tmp = 1 / (max - min) * (norm_depth - min) + 0;
+			yz_roi.at<float>(yz_v, yz_u) = tmp;
 		}
 	}
+
+	cv::medianBlur(proj_im[1], proj_im[1], 5);
 
 	// 2. z-x
 	//cv::Rect zx_bounding_box;
 	//float zx_k = 0.0;
 	proj_im[2] = cv::Mat::ones(sz, sz, CV_32F);
+	proj_im[2] *= 2.;
 	if (m_z_length >= m_x_length)
 	{
 		proj_bounding_box[2].width = sz - (pad * 2.0);
@@ -288,6 +315,14 @@ bool BoundingBox::project_direct(cv::Mat* proj_im, const int& sz)
 	proj_bounding_box[2].y = ((sz - proj_bounding_box[2].height) / 2.0);
 	cv::Mat zx_roi = proj_im[2](proj_bounding_box[2]);
 
+	min = 1000;
+	max = -1000;
+	for (int i = 0; i < m_xyz_data.size(); ++i) {
+		float depth = (-m_xyz_data[i][1] + m_y_length / 2.0) / m_y_length;
+		if (depth < 0)     depth = 0.0f;
+		if (depth < min)   min = depth;
+		if (depth > max)   max = depth;
+	}
 	for (int i = 0; i < m_xyz_data.size(); ++i)
 	{
 		int zx_u = int_rounding(proj_k[2]*(m_xyz_data[i][2] + m_z_length / 2.0));
@@ -304,17 +339,17 @@ bool BoundingBox::project_direct(cv::Mat* proj_im, const int& sz)
 		{
 			norm_depth = 0.0f;
 		}
+		
 		if (zx_roi.at<float>(zx_v, zx_u) > norm_depth)		// set the nearest point
 		{
-			zx_roi.at<float>(zx_v, zx_u) = norm_depth;
+			float tmp = 1 / (max - min) * (norm_depth - min) + 0;
+			zx_roi.at<float>(zx_v, zx_u) = tmp;
 		}
 	}
 
-	clock_t t0 = clock();
-
-	cv::medianBlur(proj_im[0], proj_im[0], 5);
-	cv::medianBlur(proj_im[1], proj_im[1], 5);
 	cv::medianBlur(proj_im[2], proj_im[2], 5);
+
+	clock_t t0 = clock();
 
 	return true;
 }

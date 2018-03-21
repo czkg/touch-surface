@@ -80,29 +80,30 @@ cv::Rect Preprocess::findRect(const cv::Mat& mask) {
 }
 
 
-cv::Mat_<float> Preprocess::findROI(const cv::Mat_<float>& img) {
-	double maxv = -10.0;
-    double minv = 10.0;
+cv::Mat_<float> Preprocess::findROI(const cv::Mat_<float>& img, const cv::Mat& mask) {
+	// double maxv = -10.0;
+ //    double minv = 10.0;
 
-    cv::Mat origMask = (img != 2.0);
+    //cv::Mat origMask = (img != 2.0);
 
-    if (countNonZero(origMask) < 100) {
+    if (countNonZero(mask) < 100) {
     	return img.clone();
     }
 
-    cv::Mat mask = origMask.clone();
-    cv::erode(mask, mask, cv::Mat(), cv::Point(-1,-1), 2);
-    cv::minMaxIdx(img, &minv, &maxv, 0, 0, mask);
+    //cv::Mat mask = origMask.clone();
+    //cv::erode(mask, mask, cv::Mat(), cv::Point(-1,-1), 2);
+    //cv::minMaxIdx(img, &minv, &maxv, 0, 0, mask);
 
-    cv::Mat des;
-    cv::Mat((img - minv) / (maxv - minv)).copyTo(des);
-    des.setTo(2.0, ~origMask);
+    // cv::Mat des;
+    // img.copyTo(des);
+    //cv::Mat((img - minv) / (maxv - minv)).copyTo(des);
+    //des.setTo(2.0, ~origMask);
 
-    cv::Rect box = findRect(origMask);
-    cv::Mat des_roi;
-    des(box).copyTo(des_roi);
+    cv::Rect box = findRect(mask);
+    //cv::Mat des_roi;
+    //des(box).copyTo(des_roi);
 
     //getSquareImage(des_roi); // we do this out of this function
 
-    return des_roi;
+    return img(box);
 }

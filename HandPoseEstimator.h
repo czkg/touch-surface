@@ -31,7 +31,7 @@ class HandPoseEstimator {
 private:
     //TODO these should come from m_inference...
     const int m_numJoints = 20;
-    const int m_heatmap_width = 18;
+    const int m_heatmap_width = 20;
     const int m_input_size    = 96;
 
     bool m_isFingerTipDetector;
@@ -52,7 +52,8 @@ public:
     FingerTips getFingerTipsFromJoints(const std::vector<cv::Point2f>& joints);
     std::vector<cv::Mat> projection(const cv::Mat& roi);
     void convertDepthImageToProjective(const cv::Mat_<float>& depth, float* uvd);
-    void convertDepthToWorldCoordinates(const float* uvd, float* xyz);
+    void convertDepthToWorldCoordinates(const float* uvd, float* xyz, const int& count, const int& width, const int& height);
+    void convertWorldCoordinatesToDepth(const float* xyz, float* uvd, const int& count, const int& width, const int& height);
     void drawJoints(cv::Mat& imageROI, const std::vector<cv::Point2f>& js);
 
     void setIsFingerTipModel(const bool isFt) {
