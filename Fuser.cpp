@@ -541,7 +541,7 @@ void Fuser::get_proj_bounding_box() {
 
 void Fuser::load_pca(std::string path) {
 	cv::Mat eigenvectors, eigenvalues, mean;
-	cv::FileStorage pca(path, FileStorage::READ);
+	cv::FileStorage pca(path, cv::FileStorage::READ);
 	pca["eigenvectors"] >> eigenvectors;
 	pca["eigenvalues"] >> eigenvalues;
 	pca["mean"] >> mean;

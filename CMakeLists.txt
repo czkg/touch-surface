@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 11)  # for c++11
 
 include(${PROJECT_SOURCE_DIR}/Inference/cmake/FindGlog.cmake)
 include(${PROJECT_SOURCE_DIR}/Inference/cmake/FindCaffe.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/freenect2Config.cmake)
 
 find_package(OpenCV 3 REQUIRED core highgui imgproc videoio calib3d)
 find_package(Boost REQUIRED filesystem)
@@ -13,7 +14,8 @@ link_libraries(${Boost_LIBRARIES})
 find_package(Protobuf REQUIRED)
 find_package(CUDA REQUIRED)
 
-link_directories("/home/cz/Downloads/OpenNI-Linux-x64-2.3/Redist")
+#link_directories("/home/cz/Downloads/OpenNI-Linux-x64-2.3/Redist")
+include_directories(${freenect2_INCLUDE_DIRS})
 
 link_directories(${PROJECT_SOURCE_DIR}/3rdparty/dlib/build/dlib)
 include_directories(${PROJECT_SOURCE_DIR}/3rdparty/dlib)
@@ -22,10 +24,9 @@ include_directories(${PROJECT_SOURCE_DIR}/3rdparty/dlib)
 set(LINK_LIBS /usr/local/lib/libopencv_core.so.3.2
               /usr/local/lib/libopencv_highgui.so.3.2
               /usr/local/lib/libopencv_imgcodecs.so.3.2
-              /usr/local/lib/libopencv_videoio.so.3.2
+	      /usr/local/lib/libopencv_videoio.so.3.2
               /usr/local/lib/libopencv_imgproc.so.3.2
               /usr/local/lib/libopencv_calib3d.so.3.2
-              OpenNI2
               pthread
               dlib)
 
@@ -63,7 +64,7 @@ add_executable(touchDetector main.cpp
 			     HandPSO.cpp
 			     Fuser.cpp
 			     BoundingBox.cpp)
-target_link_libraries(touchDetector ${LINK_LIBS} ${CURSES_LIBRARIES} Inference CUDA_RDF)
+target_link_libraries(touchDetector ${LINK_LIBS} ${CURSES_LIBRARIES} Inference CUDA_RDF ${freenect2_LIBRARIES})
 
 add_executable(calibrateProCam calibrate_pro_cam.cpp)
 target_link_libraries(calibrateProCam ${LINK_LIBS})

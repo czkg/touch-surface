@@ -34,18 +34,18 @@ std::vector<Touches> TouchDetection::process(const cv::Mat_<float>& depth) {
         }
 
         if (m_pixelDepthHistogram.empty() or m_pixelHistogramFrames == 0) {
-            std::cout << "init pixel histograms: " << std::flush;
+            cout << "init pixel histograms: " << flush;
 
             initializePixelHistograms(depth);
             m_pixelHistogramFrames = 1;
         } else {
-            std::cout << "." << std::flush;
+            cout << "." << flush;
 
             addFrameToPixelHistograms(depth);
             m_pixelHistogramFrames++;
 
             if (m_pixelHistogramFrames == m_maxPixelHistogramFrames) {
-                std::cout << "Done." << '\n';
+                cout << "Done." << endl;
 
                 findDMaxDMinFromPixelHistogram();
 
@@ -69,7 +69,6 @@ std::vector<Touches> TouchDetection::process(const cv::Mat_<float>& depth) {
     handMaskRaw.convertTo(handMask, CV_32FC1);
     boxFilter(handMask, handMask, -1, Size(9, 9));
     handMask = handMask > 128.0 & handMaskRaw;
-    // imshow("hand", handMask);
 
 
     // Mat_<Vec3i> rdfSegmentation = m_rdf.process(depth);
@@ -97,6 +96,7 @@ std::vector<Touches> TouchDetection::process(const cv::Mat_<float>& depth) {
     int largestContourArea = -1;
     for (int i = 0; i < handContours.size(); i++) {
         const int candidateContourArea = contourArea(handContours[i]);
+        cout << candidateContourArea << "!!!!!!!!!!!!!!" << endl;
         if (candidateContourArea > m_min_hand_contour_area and
             candidateContourArea < m_max_hand_contour_area and
             candidateContourArea > largestContourArea)
@@ -259,6 +259,8 @@ std::vector<Touches> TouchDetection::process(const cv::Mat_<float>& depth) {
         handMask2.setTo(0, ~handMask2temp);
     }
     // Get all the joints then use them to get the fingertips
+    imshow("hand", handMask1);
+    cv::waitKey(1);
     FingerTips fingerTips1 = m_hand_pose_estimator.process(depth, handMask1);
     FingerTips fingerTips2;
     Mat dis = depth / 1000;

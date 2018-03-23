@@ -17,7 +17,7 @@ public:
 	~Preprocess() {}
 	static cv::Mat_<float> filter(const cv::Mat_<float>& img);
 	static cv::Rect findRect(const cv::Mat& mask);
-	static cv::Mat_<float> findROI(const cv::Mat_<float>& img);
+	static cv::Mat_<float> findROI(const cv::Mat_<float>& img, const cv::Mat& mask);
 	static std::vector<int> getSquareImage(cv::Mat& depth);
 };
 

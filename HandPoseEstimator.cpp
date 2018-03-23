@@ -17,8 +17,8 @@ using namespace std;
 using namespace HandPoseUtils;
 using namespace TouchDetectionUtils;
 
-const float focal_length_x = 367.049
-const float focal_length_y = 367.049
+const float focal_length_x = 367.049;
+const float focal_length_y = 367.049;
 
 #define PCL_PATH "../pca/pca.ext"
 
@@ -40,6 +40,13 @@ void HandPoseEstimator::initialize(const std::string& modelFilename, const std::
 
 FingerTips HandPoseEstimator::process(const cv::Mat& depthInput, const cv::Mat& mask) {
     Mat depth = depthInput.clone();
+
+    // cv::Mat dis;
+    // depthInput.convertTo(dis, CV_32FC1, 1.0/1000.0);
+    // cv::normalize(dis, dis, 0, 1, cv::NORM_MINMAX);
+    // cv::cvtColor(dis, dis, CV_GRAY2BGR);
+    // imshow("dd", dis);
+    // cv::waitKey(1);
 
     depth /= 1000.0;
     //depth.setTo(2.0, ~mask); //remove background
@@ -117,7 +124,7 @@ FingerTips HandPoseEstimator::process(const cv::Mat& depthInput, const cv::Mat& 
 
     const int numberOfJoints = (m_isFingerTipDetector) ? 5 : 20;
     const int heatmap_size = m_heatmap_width * m_heatmap_width;
-    const int roi_width = origRoi.cols;
+    //const int roi_width = origRoi.cols;
 
     for(int i = 0; i < numberOfJoints; i++) {
         m_fuser.heatmaps_vec[i * 3] = cv::Mat(m_heatmap_width, m_heatmap_width, CV_32FC1, &result_xy[0] + i * heatmap_size);
@@ -126,14 +133,14 @@ FingerTips HandPoseEstimator::process(const cv::Mat& depthInput, const cv::Mat& 
     }
 
     /*------------------------------Fusion------------------------------*/
-    m_fuser.load_pcl(PCL_PATH);
+    m_fuser.load_pca(PCL_PATH);
     m_fuser.get_proj_bounding_box();
     float xyz_estimated[numberOfJoints * 3];
     m_fuser.fuse(xyz_estimated);
 
     /*----------------------------Get joints----------------------------*/
     float uvd_estimated[numberOfJoints * 3];
-    convertWorldCoordinatesToDepth(xyz_estimated, uvd_estimated, pixel_number, roi.cols, roi.rows);
+    convertWorldCoordinatesToDepth(xyz_estimated, uvd_estimated, numberOfJoints, roi.cols, roi.rows);
     std::vector<Point2f> joints(numberOfJoints);
 
     for(int i = 0; i < numberOfJoints; i++) {
@@ -187,7 +194,7 @@ FingerTips HandPoseEstimator::process(const cv::Mat& depthInput, const cv::Mat& 
 
     drawJoints(depth_dis, joints);
     imshow("joints", depth_dis);
-    //cv::waitKey(0);
+    cv::waitKey(1);
 
     return getFingerTipsFromJoints(joints);
 };

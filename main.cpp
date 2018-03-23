@@ -16,9 +16,18 @@
 #include <ncurses.h>
 #include <vector>
 
+#include <libfreenect2/libfreenect2.hpp>
+#include <libfreenect2/frame_listener_impl.h>
+#include <libfreenect2/registration.h>
+#include <libfreenect2/packet_pipeline.h>
+#include <libfreenect2/logger.h>
+#include <libfreenect2/config.h>
+#include <libfreenect2/frame_listener.hpp>
+
 using namespace cv;
 using namespace std;
 using namespace TouchDetectionUtils;
+using namespace libfreenect2;
 namespace fs = boost::filesystem;
 using json = nlohmann::json;
 
@@ -35,7 +44,7 @@ static void onMouse( int event, int x, int y, int flags, void* ) {
 }
 
 void signalHandler( int signum ) {
-   cout << "Interrupt signal (" << signum << ") received.\n";
+   cout << "Interrupt signal (" << signum << ") received." << endl;
    running = false;
 }
 
@@ -253,6 +262,17 @@ int main(int argc, char const *argv[]) {
     // register signal SIGINT and signal handler
     signal(SIGINT, signalHandler);
 
+    // cv::CommandLineParser parser(argc, argv, "{help h||}"
+    //                                          "{@source||}"
+    //                                          "{calib|pro_cam_calibration.yaml|projector camera calibration file}"
+    //                                          "{cnnmodel||CNN Caffe model file (.prototxt)}"
+    //                                          "{cnnweights_xy||CNN Caffe weights file for xy plane (.caffemodel.h5)}"
+    //                                          "{cnnweights_yz||CNN Caffe weights file for yz plane (.caffemodel.h5)}"
+    //                                          "{cnnweights_zx||CNN Caffe weights file for zx plane (.caffemodel.h5)}"
+    //                                          "{rdfproto||The prototxt file of the CUDA RandomForest paremeters}"
+    //                                          "{rdfdata||The data file of the CUDA RandomForest}"
+    //                                      );
+
     cv::CommandLineParser parser(argc, argv, "{help h||}"
                                              "{@source||}"
                                              "{calib|pro_cam_calibration.yaml|projector camera calibration file}"
@@ -260,8 +280,6 @@ int main(int argc, char const *argv[]) {
                                              "{cnnweights_xy||CNN Caffe weights file for xy plane (.caffemodel.h5)}"
                                              "{cnnweights_yz||CNN Caffe weights file for yz plane (.caffemodel.h5)}"
                                              "{cnnweights_zx||CNN Caffe weights file for zx plane (.caffemodel.h5)}"
-                                             "{rdfproto||The prototxt file of the CUDA RandomForest paremeters}"
-                                             "{rdfdata||The data file of the CUDA RandomForest}"
                                          );
 
     if (parser.has("help")) {
@@ -272,8 +290,8 @@ int main(int argc, char const *argv[]) {
         parser.printErrors();
         return 1;
     }
-    if (not parser.has("cnnmodel") or not parser.has("cnnweights")) {
-        std::cerr << "Must supply 'cnnmodel' and 'cnnweights' files." << '\n';
+    if (not parser.has("cnnmodel") or not parser.has("cnnweights_xy") or not parser.has("cnnweights_yz") or not parser.has("cnnweights_zx")) {
+        cerr << "Must supply 'cnnmodel' and 'cnnweights' files." << endl;
         return 1;
     }
 
@@ -285,23 +303,78 @@ int main(int argc, char const *argv[]) {
                                         parser.get<string>("cnnweights_xy"),
                                         parser.get<string>("cnnweights_yz"),
                                         parser.get<string>("cnnweights_zx"));
-    touchServer.loadRDF                (parser.get<string>("rdfproto"),
-                                        parser.get<string>("rdfdata"), Size(640, 480));
+    // touchServer.loadRDF                (parser.get<string>("rdfproto"),
+    //                                     parser.get<string>("rdfdata"), Size(640, 480));
 
+    Freenect2 freenect2;
+    Freenect2Device* dev = 0;
+    PacketPipeline* pipeline = new libfreenect2::OpenCLPacketPipeline();
+
+    bool enable_rgb = true;
+    bool enable_depth = true;
+
+    std::string serial = "";
     cout << "Device opening ..." << endl;
-    VideoCapture capture;
-    if( fs::is_regular_file(source)) {
-        capture.open(source);
-    } else {
-        capture.open( CAP_OPENNI2 );
-        if( !capture.isOpened() )
-        capture.open( CAP_OPENNI );
+
+    if(freenect2.enumerateDevices() == 0) {
+        cout << "no device connected!" << endl;
+        return -1;
+    }
+    if(serial == ""){
+        serial = freenect2.getDefaultDeviceSerialNumber();
     }
 
-    if (not capture.isOpened()) {
-        cerr << "Can't open OpenNI cap" << endl;
-        return 1;
+    if(pipeline) {
+        dev = freenect2.openDevice(serial, pipeline);
     }
+    else {
+        dev = freenect2.openDevice(serial);
+    }
+
+    if(dev == 0) {
+        cout << "failure opening device!" << endl;
+        return -1;
+    }
+
+
+    int types = 0;
+    if(enable_rgb)
+        types |= Frame::Color;
+    if(enable_depth)
+        types |= Frame::Ir | Frame::Depth;
+    SyncMultiFrameListener listener(types);
+    FrameMap frames;
+
+    dev->setColorFrameListener(&listener);
+    dev->setIrAndDepthFrameListener(&listener);
+
+    if(enable_rgb && enable_depth) {
+        if(!dev->start())
+            return -1;
+    }
+    else {
+        if(!dev->startStreams(enable_rgb, enable_depth))
+            return -1;
+    }
+
+    cout << "device serial: " << dev->getSerialNumber() << endl;
+    cout << "device firmware: " << dev->getFirmwareVersion() << endl;
+
+
+    // cout << "Device opening ..." << endl;
+    // VideoCapture capture;
+    // if( fs::is_regular_file(source)) {
+    //     capture.open(source);
+    // } else {
+    //     capture.open( CAP_OPENNI2 );
+    //     if( !capture.isOpened() )
+    //     capture.open( CAP_OPENNI );
+    // }
+
+    // if (not capture.isOpened()) {
+    //     cerr << "Can't open OpenNI cap" << endl;
+    //     return 1;
+    // }
 
 
     startWSServer();
@@ -318,11 +391,11 @@ int main(int argc, char const *argv[]) {
     scrollok(stdscr, TRUE);
 
     for (;running;) {
-        Mat depthMap;
-        Mat depthMap2;
-        Mat depthMap3;
-        Mat rgb;
-        Mat validDepthMap;
+        // Mat depthMap;
+        // Mat depthMap2;
+        // Mat depthMap3;
+        // Mat rgb;
+        // Mat validDepthMap;
 
         // isRecordLast = isRecord;
         // int ch = getch();
@@ -332,48 +405,78 @@ int main(int argc, char const *argv[]) {
         //     else {cout << endl << "stop record!" << endl;}
         // }
 
-        if (not capture.grab()) {
-            cout << "Can not grab images." << endl;
+        // if (not capture.grab()) {
+        //     cout << "Can not grab images." << endl;
+        //     break;
+        // }
+        if(!listener.waitForNewFrame(frames, 10*1000)) {
+            cout << "timeout!" << endl;
             break;
-        } else {
-            // touchServer.addTouch(mousePoint);
-            if (capture.retrieve(depthMap, CAP_OPENNI_DEPTH_MAP)
-                // && capture.retrieve(depthMap2, CAP_OPENNI_DEPTH_MAP)
-                // && capture.retrieve(depthMap3, CAP_OPENNI_DEPTH_MAP)
-                ) {
-                try {
-                    Mat depth32F;
-                    Mat depth32F_2, depth32F_3;
-                    depthMap.convertTo(depth32F, CV_32FC1);
-                    // depthMap2.convertTo(depth32F_2, CV_32FC1);
-                    // depthMap3.convertTo(depth32F_3, CV_32FC1);
-
-                    // Mat_<float> depth32F_new;
-                    // depth32F = cv::max(depth32F, depth32F_2);
-                    // depth32F = cv::max(depth32F, depth32F_3);
-
-                    imshow("depth", depthMap * 20);
-                    //Time start = now();
-                    touchServer.process(depth32F);
-                    // std::cout << "took" << untilNowMs(start) << "sum: " << sum << "count: " << count << std::endl;
-                    // sum += untilNowMs(start);
-                    // count ++;
-                } catch(const cv::Exception& e) {
-                    cerr << "error while processing depth: " << e.what() << endl;
-                    break;
-                }
-            }
-            if (capture.retrieve(rgb, CAP_OPENNI_BGR_IMAGE)) {
-                touchServer.drawRGB(rgb);
-                imshow("color", rgb);
-            }
         }
+
+        Frame* rgbFrame = frames[Frame::Color];
+        Frame* irFrame = frames[Frame::Ir];
+        Frame* depthFrame = frames[Frame::Depth];
+
+        //depth
+        Mat depth(depthFrame->height, depthFrame->width, CV_32FC1, depthFrame->data);
+        touchServer.process(depth);
+        cv::Mat dis;
+        depth.convertTo(dis, CV_32FC1, 1.0/1000.0);
+        cv::normalize(dis, dis, 0, 1, cv::NORM_MINMAX);
+        cv::cvtColor(dis, dis, CV_GRAY2BGR);
+        imshow("depth", dis);
+        cv::waitKey(1);
+        //rgb
+        Mat rgb(rgbFrame->height, rgbFrame->width, CV_8UC4, rgbFrame->data);
+        //touchServer.drawRGB(rgb);
+        //cv::cvtColor(rgb, rgb, CV_BGR2RGB);
+        //imshow("color", rgb);
+        //cv::waitKey(1);
+
+        // else {
+        //     // touchServer.addTouch(mousePoint);
+        //     if (capture.retrieve(depthMap, CAP_OPENNI_DEPTH_MAP)
+        //         // && capture.retrieve(depthMap2, CAP_OPENNI_DEPTH_MAP)
+        //         // && capture.retrieve(depthMap3, CAP_OPENNI_DEPTH_MAP)
+        //         ) {
+        //         try {
+        //             Mat depth32F;
+        //             Mat depth32F_2, depth32F_3;
+        //             depthMap.convertTo(depth32F, CV_32FC1);
+        //             // depthMap2.convertTo(depth32F_2, CV_32FC1);
+        //             // depthMap3.convertTo(depth32F_3, CV_32FC1);
+
+        //             // Mat_<float> depth32F_new;
+        //             // depth32F = cv::max(depth32F, depth32F_2);
+        //             // depth32F = cv::max(depth32F, depth32F_3);
+
+        //             imshow("depth", depthMap * 20);
+        //             //Time start = now();
+        //             touchServer.process(depth32F);
+        //             // std::cout << "took" << untilNowMs(start) << "sum: " << sum << "count: " << count << std::endl;
+        //             // sum += untilNowMs(start);
+        //             // count ++;
+        //         } catch(const cv::Exception& e) {
+        //             cerr << "error while processing depth: " << e.what() << endl;
+        //             break;
+        //         }
+        //     }
+        //     if (capture.retrieve(rgb, CAP_OPENNI_BGR_IMAGE)) {
+        //         touchServer.drawRGB(rgb);
+        //         imshow("color", rgb);
+        //     }
+        // }
 
         const int key = waitKey(20);
         if (key == 'q' or key == 27) {
             break;
         }
+
+        listener.release(frames);
     }
+    dev->stop();
+    dev->close();
 
     stopWSServer();
 
